@@ -8,6 +8,9 @@ export type PrayerTimes = {
   isha: string
 }
 
+/**
+ * Constants and Utility Functions
+ */
 const d2r = (d: number) => (d * Math.PI) / 180
 const r2d = (r: number) => (r * 180) / Math.PI
 
@@ -18,75 +21,89 @@ export function calculatePrayerTimes(
   date: Date = new Date(),
   fajrAngle = -18,
   ishaAngle = -18,
-  asrShadow = 1 // 1 for Shafi, 2 for Hanafi
+  asrShadow = 1 // 1: Shafi/Maliki/Hanbali, 2: Hanafi
 ): PrayerTimes {
-  // Day of the year
-  const start = new Date(date.getFullYear(), 0, 1)
+  
+  // 1. Calculate Day of the Year (N)
+  const start = new Date(date.getFullYear(), 0, 0)
   const diff = date.getTime() - start.getTime()
   const oneDay = 1000 * 60 * 60 * 24
-  const N = Math.floor(diff / oneDay) + 1
+  const N = Math.floor(diff / oneDay)
 
-  // Solar declination δ
-  const delta = 23.45 * Math.sin(d2r((360 / 365) * (N - 81)))
-
-  // Equation of Time (EoT)
+  // 2. Solar Calculations
+  // B represents the fractional year in degrees
   const B = (360 / 365) * (N - 81)
-  const EoT =
-    9.87 * Math.sin(d2r(2 * B)) -
-    7.53 * Math.cos(d2r(B)) -
-    1.5 * Math.sin(d2r(B))
+  
+  // Solar Declination (delta)
+  const delta = 23.45 * Math.sin(d2r(B))
 
-  // Solar noon (Dhuhr)
-  const solarNoon = 12 + timezone - lng / 15 - EoT / 60
+  // Equation of Time (EoT) in minutes
+  const EoT = 9.87 * Math.sin(d2r(2 * B)) - 7.53 * Math.cos(d2r(B)) - 1.5 * Math.sin(d2r(B))
 
-  // Hour angle calculation
-  const calculateHourAngle = (angle: number) => {
+  // 3. Solar Noon (Dhuhr)
+  // Base calculation: 12 + Timezone - (Longitude / 15) - (EoT / 60)
+  // We add a small buffer (approx 1-2 mins) to ensure the sun has passed the meridian
+  const dhuhrTime = 12 + timezone - lng / 15 - EoT / 60
+  const solarNoon = dhuhrTime + (2 / 60) 
+
+  /**
+   * Universal Hour Angle (H) Formula
+   * Finds the time offset from solar noon for a given solar altitude (a)
+   */
+  const getHourAngle = (angle: number) => {
     const phi = d2r(lat)
     const d = d2r(delta)
-    let cosH =
-      (Math.sin(d2r(angle)) - Math.sin(phi) * Math.sin(d)) /
-      (Math.cos(phi) * Math.cos(d))
-    // Clamp to [-1, 1] to prevent NaN
-    cosH = Math.min(1, Math.max(-1, cosH))
+    const a = d2r(angle)
+    
+    let cosH = (Math.sin(a) - Math.sin(phi) * Math.sin(d)) / (Math.cos(phi) * Math.cos(d))
+    
+    // Safety check for latitudes where the sun doesn't reach certain angles
+    if (cosH > 1) return null // Sun never rises to this angle
+    if (cosH < -1) return null // Sun never sets below this angle
+    
     return r2d(Math.acos(cosH))
   }
 
-  // Format time to HH:MM AM/PM
-  const formatTime = (hours: number) => {
-    if (hours < 0) hours += 24
-    if (hours >= 24) hours -= 24
-    let h = Math.floor(hours)
-    let m = Math.floor((hours - h) * 60)
-    if (m === 60) {
-      m = 0
-      h += 1
-    }
-    const displayH = h % 24
-    const period = displayH >= 12 ? "PM" : "AM"
-    const finalH = displayH % 12 || 12
-    return `${finalH}:${m.toString().padStart(2, "0")} ${period}`
-  }
-
-  // Fajr, Sunrise, Maghrib, Isha angles
-  const Hfajr = calculateHourAngle(fajrAngle)
-  const Hsunrise = calculateHourAngle(-0.833)
-  const Hmaghrib = calculateHourAngle(-0.833)
-  const Hisha = calculateHourAngle(ishaAngle)
-
-  // Asr calculation (fixed)
+  // 4. Calculate Asr Altitude (The fix)
+  // Formula: cot(a) = n + tan(|lat - delta|)
   const phi = d2r(lat)
   const d = d2r(delta)
-  const asrAltitude = -r2d(
-    Math.atan(1 / (asrShadow + Math.tan(Math.abs(phi - d))))
-  )
-  const Hasr = calculateHourAngle(asrAltitude)
+  const asrAltitude = r2d(Math.atan(1 / (asrShadow + Math.tan(Math.abs(phi - d)))))
+
+  // 5. Compute Hour Angles for each event
+  const hFajr = getHourAngle(fajrAngle)
+  const hSunrise = getHourAngle(-0.833)
+  const hAsr = getHourAngle(asrAltitude)
+  const hMaghrib = getHourAngle(-0.833)
+  const hIsha = getHourAngle(ishaAngle)
+
+  /**
+   * Time Formatting Utility
+   */
+  const formatTime = (hours: number | null) => {
+    if (hours === null) return "--:--"
+    
+    // Wrap hours around 24h clock
+    let h24 = (hours + 24) % 24
+    let h = Math.floor(h24)
+    let m = Math.round((h24 - h) * 60)
+    
+    if (m === 60) {
+      m = 0
+      h = (h + 1) % 24
+    }
+
+    const period = h >= 12 ? "PM" : "AM"
+    const h12 = h % 12 || 12
+    return `${h12}:${m.toString().padStart(2, "0")} ${period}`
+  }
 
   return {
-    fajr: Hfajr ? formatTime(solarNoon - Hfajr / 15) : "--:--",
-    sunrise: Hsunrise ? formatTime(solarNoon - Hsunrise / 15) : "--:--",
+    fajr: formatTime(solarNoon - (hFajr || 0) / 15),
+    sunrise: formatTime(solarNoon - (hSunrise || 0) / 15),
     dhuhr: formatTime(solarNoon),
-    asr: Hasr ? formatTime(solarNoon + Hasr / 15) : "--:--",
-    maghrib: Hmaghrib ? formatTime(solarNoon + Hmaghrib / 15) : "--:--",
-    isha: Hisha ? formatTime(solarNoon + Hisha / 15) : "--:--",
+    asr: formatTime(solarNoon + (hAsr || 0) / 15),
+    maghrib: formatTime(solarNoon + (hMaghrib || 0) / 15),
+    isha: formatTime(solarNoon + (hIsha || 0) / 15),
   }
 }
