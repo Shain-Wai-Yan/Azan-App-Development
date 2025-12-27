@@ -99,7 +99,7 @@ export function getHijriDate(date: Date, offset: number) {
 
   const a = Math.floor(year / 100);
   const b = 2 - a + Math.floor(a / 4);
-  const jd = Math.floor(365.25 * (year + 4716)) + Math.floor(30.6001 * (month + 1)) + day + b - 1524.5;
+  const jd = Math.floor(365.25 * (year + 4716)) + Math.floor(30.6001 * (month + 1)) + day + b - 1524;
 
   // 3. Hijri Calculation (Civil Algorithm)
   const epoch = 1948440; // The fixed Islamic Epoch
