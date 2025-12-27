@@ -83,47 +83,35 @@ function minsToHours(mins: number) {
 // --- Hijri Calendar and Islamic Event Calculation Logic ---
 
 export function getHijriDate(date: Date, offset: number) {
-  // 1. Create a copy and apply the manual offset (+1, 0, -1 days)
-  const adjustedDate = new Date(date);
-  adjustedDate.setDate(date.getDate() + offset);
+  // 1. Create a copy and apply the manual offset
+  const d = new Date(date);
+  d.setDate(d.getDate() + offset);
 
-  const day = adjustedDate.getDate();
-  const month = adjustedDate.getMonth() + 1;
-  const year = adjustedDate.getFullYear();
+  let day = d.getDate();
+  let month = d.getMonth() + 1;
+  let year = d.getFullYear();
 
-  // 2. Convert Gregorian to Julian Date
-  let m = month;
-  let y = year;
-  if (m < 3) {
-    y -= 1;
-    m += 12;
+  // 2. Julian Day Calculation
+  if (month < 3) {
+    year -= 1;
+    month += 12;
   }
 
-  const a = Math.floor(y / 100);
-  let b = 2 - a + Math.floor(a / 4);
-  if (y < 1583) b = 0;
-  if (y === 1582) {
-    if (m > 10) b = -10;
-    if (m === 10) {
-      if (day > 4) b = -10;
-    }
-  }
+  const a = Math.floor(year / 100);
+  const b = 2 - a + Math.floor(a / 4);
+  const jd = Math.floor(365.25 * (year + 4716)) + Math.floor(30.6001 * (month + 1)) + day + b - 1524.5;
 
-  const jd = Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + day + b - 1524;
-
-  // 3. Convert Julian Date to Hijri
-  const epochastro = 1948084;
-  const l0 = jd - epochastro + 10632;
+  // 3. Hijri Calculation (Civil Algorithm)
+  const epoch = 1948440; // The fixed Islamic Epoch
+  const l0 = jd - epoch + 10632;
   const n = Math.floor((l0 - 1) / 10631);
   const l = l0 - 10631 * n + 354;
-  const j =
-    Math.floor((10985 - l) / 5316) * Math.floor((50 * l + 2) / 17719) +
-    Math.floor(l / 5670) * Math.floor((43 * l + 2) / 15238);
-  const l2 =
-    l -
-    Math.floor((30 - j) / 15) * Math.floor((17719 * j + 2) / 50) -
-    Math.floor(j / 16) * Math.floor((15238 * j + 2) / 43) +
-    29;
+  
+  const j = Math.floor((10985 - l) / 5316) * Math.floor((50 * l + 2) / 17719) + 
+            Math.floor(l / 5670) * Math.floor((43 * l + 2) / 15238);
+            
+  const l2 = l - Math.floor((30 - j) / 15) * Math.floor((17719 * j + 2) / 50) - 
+             Math.floor(j / 16) * Math.floor((15238 * j + 2) / 43) + 29;
 
   const hMonth = Math.floor((24 * l2 + 3) / 709);
   const hDay = l2 - Math.floor((709 * hMonth + 3) / 24);
