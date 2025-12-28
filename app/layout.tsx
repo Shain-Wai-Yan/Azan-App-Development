@@ -8,8 +8,9 @@ const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Azan - Precise Prayer Times",
-  description: "Fast and accurate prayer times based on solar calculations.",
+  title: "Azan - Precise Prayer Times Myanmar & Global",
+  description:
+    "Fast and accurate prayer times based on solar calculations. Offline-ready, bilingual (Burmese/English), and privacy-focused Islamic prayer schedule.",
   generator: "v0.app",
   manifest: "/manifest.json",
   themeColor: "#000000",
@@ -36,6 +37,13 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "Azan",
   },
+  alternates: {
+    canonical: "https://azan.mm", // Replace with your actual domain
+    languages: {
+      "en-US": "/en",
+      "my-MM": "/mm",
+    },
+  },
 }
 
 export default function RootLayout({
@@ -44,8 +52,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className={`font-sans antialiased`}>
+    <html lang="en" className="scroll-smooth">
+      <body className={`font-sans antialiased bg-background selection:bg-primary/10 selection:text-primary`}>
         {children}
         <Analytics />
       </body>

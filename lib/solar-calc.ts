@@ -84,40 +84,44 @@ function minsToHours(mins: number) {
 
 export function getHijriDate(date: Date, offset: number) {
   // 1. Create a copy and apply the manual offset
-  const d = new Date(date);
-  d.setDate(d.getDate() + offset);
+  const d = new Date(date)
+  d.setDate(d.getDate() + offset)
 
-  let day = d.getDate();
-  let month = d.getMonth() + 1;
-  let year = d.getFullYear();
+  const day = d.getDate()
+  let month = d.getMonth() + 1
+  let year = d.getFullYear()
 
   // 2. Julian Day Calculation
   if (month < 3) {
-    year -= 1;
-    month += 12;
+    year -= 1
+    month += 12
   }
 
-  const a = Math.floor(year / 100);
-  const b = 2 - a + Math.floor(a / 4);
-  const jd = Math.floor(365.25 * (year + 4716)) + Math.floor(30.6001 * (month + 1)) + day + b - 1524;
+  const a = Math.floor(year / 100)
+  const b = 2 - a + Math.floor(a / 4)
+  const jd = Math.floor(365.25 * (year + 4716)) + Math.floor(30.6001 * (month + 1)) + day + b - 1524
 
   // 3. Hijri Calculation (Civil Algorithm)
-  const epoch = 1948440; // The fixed Islamic Epoch
-  const l0 = jd - epoch + 10632;
-  const n = Math.floor((l0 - 1) / 10631);
-  const l = l0 - 10631 * n + 354;
-  
-  const j = Math.floor((10985 - l) / 5316) * Math.floor((50 * l + 2) / 17719) + 
-            Math.floor(l / 5670) * Math.floor((43 * l + 2) / 15238);
-            
-  const l2 = l - Math.floor((30 - j) / 15) * Math.floor((17719 * j + 2) / 50) - 
-             Math.floor(j / 16) * Math.floor((15238 * j + 2) / 43) + 29;
+  const epoch = 1948440 // The fixed Islamic Epoch
+  const l0 = jd - epoch + 10632
+  const n = Math.floor((l0 - 1) / 10631)
+  const l = l0 - 10631 * n + 354
 
-  const hMonth = Math.floor((24 * l2 + 3) / 709);
-  const hDay = l2 - Math.floor((709 * hMonth + 3) / 24);
-  const hYear = 30 * n + j - 30;
+  const j =
+    Math.floor((10985 - l) / 5316) * Math.floor((50 * l + 2) / 17719) +
+    Math.floor(l / 5670) * Math.floor((43 * l + 2) / 15238)
 
-  return { day: hDay, month: hMonth, year: hYear };
+  const l2 =
+    l -
+    Math.floor((30 - j) / 15) * Math.floor((17719 * j + 2) / 50) -
+    Math.floor(j / 16) * Math.floor((15238 * j + 2) / 43) +
+    29
+
+  const hMonth = Math.floor((24 * l2 + 3) / 709)
+  const hDay = l2 - Math.floor((709 * hMonth + 3) / 24)
+  const hYear = 30 * n + j - 30
+
+  return { day: hDay, month: hMonth, year: hYear }
 }
 
 export function getIslamicEvent(day: number, month: number) {
@@ -241,3 +245,28 @@ export function calculatePrayerTimesAdvanced(
 
 // 🔹 Backward compatibility alias
 export const calculatePrayerTimes = calculatePrayerTimesAdvanced
+
+export const CITIES = [
+  { name: "Yangon", slug: "yangon", lat: 16.8661, lng: 96.1951, timezone: 6.5 },
+  { name: "Mandalay", slug: "mandalay", lat: 21.9588, lng: 96.0891, timezone: 6.5 },
+  { name: "Naypyidaw", slug: "naypyidaw", lat: 19.7633, lng: 96.0785, timezone: 6.5 },
+  { name: "Taunggyi", slug: "taunggyi", lat: 20.7888, lng: 97.0333, timezone: 6.5 },
+  { name: "Mawlamyine", slug: "mawlamyine", lat: 16.4833, lng: 97.6333, timezone: 6.5 },
+  { name: "Bago", slug: "bago", lat: 17.3333, lng: 96.4833, timezone: 6.5 },
+  { name: "Pathein", slug: "pathein", lat: 16.7833, lng: 94.7333, timezone: 6.5 },
+  { name: "Pyay", slug: "pyay", lat: 18.8167, lng: 95.2167, timezone: 6.5 },
+  { name: "Monywa", slug: "monywa", lat: 22.1167, lng: 95.1333, timezone: 6.5 },
+  { name: "Sittwe", slug: "sittwe", lat: 20.15, lng: 92.9, timezone: 6.5 },
+  { name: "Lashio", slug: "lashio", lat: 22.95, lng: 97.75, timezone: 6.5 },
+  { name: "Meiktila", slug: "meiktila", lat: 20.8833, lng: 95.85, timezone: 6.5 },
+  { name: "Magway", slug: "magway", lat: 20.15, lng: 94.9167, timezone: 6.5 },
+  { name: "Myitkyina", slug: "myitkyina", lat: 25.3833, lng: 97.4, timezone: 6.5 },
+  { name: "Dawei", slug: "dawei", lat: 14.0833, lng: 98.2, timezone: 6.5 },
+  { name: "Hpa-An", slug: "hpa-an", lat: 16.8833, lng: 97.6333, timezone: 6.5 },
+  { name: "Loikaw", slug: "loikaw", lat: 19.6667, lng: 97.2, timezone: 6.5 },
+  { name: "Hakha", slug: "hakha", lat: 22.65, lng: 93.6, timezone: 6.5 },
+  { name: "Kalay", slug: "kalay", lat: 23.2, lng: 94.0167, timezone: 6.5 },
+  { name: "Pakokku", slug: "pakokku", lat: 21.3333, lng: 95.0833, timezone: 6.5 },
+  { name: "Thaton", slug: "thaton", lat: 16.9167, lng: 97.3667, timezone: 6.5 },
+  { name: "Pyin Oo Lwin", slug: "pyin-oo-lwin", lat: 22.0315, lng: 96.471, timezone: 6.5 },
+]
