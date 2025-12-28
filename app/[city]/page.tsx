@@ -9,18 +9,13 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const cityData = CITIES.find((c) => c.slug === city)
   if (!cityData) return { title: "Prayer Times" }
 
-  const date = new Date()
-  const hijri = getHijriDate(date, 0)
-  const event = getIslamicEvent(hijri.day, hijri.month)
-
-  const title = `${cityData.name} Prayer Times Today | Fajr, Dhuhr, Asr, Maghrib, Isha | Azan MM`
-  const description = `Accurate prayer times for ${cityData.name} today, Myanmar. Fajr, Dhuhr, Asr, Maghrib, and Isha updated daily. Hijri date: ${hijri.day}/${hijri.month}/${hijri.year}${event ? `, Event: ${event.key}` : ""}.`
+  const title = `${cityData.name} Prayer Times Today (Fajr, Maghrib, Isha) | Azan MM`
+  const description = `Accurate ${cityData.name} prayer times today. Fajr, Dhuhr, Asr, Maghrib, and Isha updated daily for Myanmar and the global community.`
 
   return {
     title,
     description,
-    openGraph: { title, description, type: "website", url: `https://azanmm.com/${city}`, locale: "en_MM" },
-    twitter: { card: "summary_large_image", title, description, site: "@AzanMM" },
+    openGraph: { title, description },
   }
 }
 
@@ -39,45 +34,36 @@ export default async function CityPage({ params }: { params: Params }) {
     2,
     undefined,
     undefined,
-    0
+    0,
   )
 
   const hijri = getHijriDate(date, 0)
   const event = getIslamicEvent(hijri.day, hijri.month)
 
+  // JSON-LD Structured Data
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Dataset",
     name: `${cityData.name} Prayer Times`,
     description: `Islamic prayer times for ${cityData.name}, Myanmar.`,
-    datePublished: date.toISOString(),
     spatialCoverage: {
       "@type": "Place",
       name: cityData.name,
       geo: { "@type": "GeoCoordinates", latitude: cityData.lat, longitude: cityData.lng },
     },
     variableMeasured: ["Fajr", "Sunrise", "Dhuhr", "Asr", "Maghrib", "Isha"],
-    creator: { "@type": "Organization", name: "Azan MM" },
-    temporalCoverage: date.toISOString().split("T")[0],
   }
 
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <main>
-        <h1>{cityData.name} Prayer Times Today</h1>
-        <p>
-          Hijri Date: {hijri.day}/{hijri.month}/{hijri.year}
-          {event ? `, Islamic Event: ${event.key}` : ""}
-        </p>
-        <PrayerTimesClient
-          initialTimes={initialTimes}
-          initialCity={cityData}
-          initialHijri={hijri}
-          initialEvent={event}
-          isRegional={true}
-        />
-      </main>
+      <PrayerTimesClient
+        initialTimes={initialTimes}
+        initialCity={cityData}
+        initialHijri={hijri}
+        initialEvent={event}
+        isRegional={true}
+      />
     </>
   )
 }
