@@ -2,10 +2,10 @@ import { calculatePrayerTimes, getHijriDate, getIslamicEvent, CITIES, CalcMethod
 import PrayerTimesClient from "@/components/prayer-times-client"
 import type { Metadata } from "next"
 
-type Params = { city: string }
+type Params = Promise<{ city: string }>
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
-  const { city } = params
+  const { city } = await params
   const cityData = CITIES.find((c) => c.slug === city)
   if (!cityData) return { title: "Prayer Times" }
 
@@ -19,24 +19,13 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   return {
     title,
     description,
-    openGraph: {
-      title,
-      description,
-      type: "website",
-      url: `https://azanmm.com/${city}`,
-      locale: "en_MM",
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      site: "@AzanMM",
-    },
+    openGraph: { title, description, type: "website", url: `https://azanmm.com/${city}`, locale: "en_MM" },
+    twitter: { card: "summary_large_image", title, description, site: "@AzanMM" },
   }
 }
 
 export default async function CityPage({ params }: { params: Params }) {
-  const { city } = params
+  const { city } = await params
   const cityData = CITIES.find((c) => c.slug === city)
   if (!cityData) return <div>City not found</div>
 
